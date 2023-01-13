@@ -9,6 +9,6 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface ImageRepository extends JpaRepository<Image, Integer> {
     @Modifying
-    @Query("select * from image i where i.id =:id")
+    @Query(value = "select * from image i where i.id =:id",nativeQuery = true)
     Image findById(int id);
 }

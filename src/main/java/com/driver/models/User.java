@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import javax.persistence.*;
 import java.util.ArrayList;
+import java.util.List;
 
 
 @Entity
@@ -17,13 +18,13 @@ public class User {
     private String firstName;
     private String lastName;
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
-    private ArrayList<Blog> blogList;
+    private List<Blog> blogList;
 
-    public ArrayList<Blog> getBlogList() {
+    public List<Blog> getBlogList() {
         return blogList;
     }
 
-    public void setBlogList(ArrayList<Blog> blogList) {
+    public void setBlogList(List<Blog> blogList) {
         this.blogList = blogList;
     }
 

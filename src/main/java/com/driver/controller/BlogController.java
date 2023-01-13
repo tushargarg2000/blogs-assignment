@@ -25,22 +25,19 @@ public class BlogController {
     }
 
     @PostMapping
-    public ResponseEntity<Blog> createBlog(@RequestBody User user,
+    public ResponseEntity<Blog> createBlog(@RequestParam Integer userId ,
                                            @RequestParam String title,
                                            @RequestParam String content) throws ParseException {
-        Blog blog = blogService.createAndReturnBlog(user, title, content);
+        Blog blog = blogService.createAndReturnBlog(userId, title, content);
         return new ResponseEntity<>(blog, HttpStatus.CREATED);
     }
 
     @PutMapping("/{blogId}/add-image")
-    public ResponseEntity<Blog> addImage(@PathVariable int blogId, @RequestBody Image image) {
-        Blog blog = blogService.findBlogById(blogId);
-        if (blog != null) {
-            blogService.addImage(blog, image.getDescription(), image.getDimensions());
-            return new ResponseEntity<>(blog, HttpStatus.OK);
-        } else {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
+    public ResponseEntity<String> addImage(@PathVariable int blogId, @RequestBody Image image) {
+
+
+            blogService.addImage(blogId, image.getDescription(), image.getDimensions());
+            return new ResponseEntity<>("Added image succesfully", HttpStatus.OK);
     }
 
     @DeleteMapping("/{blogId}/delete-image/{imageId}")

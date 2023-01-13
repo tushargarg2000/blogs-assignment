@@ -10,11 +10,5 @@ import java.util.ArrayList;
 
 @Repository
 public interface BlogRepository extends JpaRepository<Blog, Integer> {
-    @Modifying
-    @Query("select * from blog b where b.id =:id")
-    Blog findById(int id);
 
-    @Modifying
-    @Query("select * from blog")
-    ArrayList<Blog> findAll();
 }

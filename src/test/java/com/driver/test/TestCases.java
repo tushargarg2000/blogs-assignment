@@ -83,7 +83,7 @@ public class TestCases {
     public void testCreateAndReturnBlog() throws Exception {
         when(blogRepository1.save(any(Blog.class))).thenReturn(blog);
 
-        Blog result = blogService.createAndReturnBlog(user, "Test Blog Title", "Test Blog Content");
+        Blog result = blogService.createAndReturnBlog(user.getId(), "Test Blog Title", "Test Blog Content");
         assertEquals(blog.getContent(), result.getContent());
         assertEquals(blog.getUser(), result.getUser());
         assertEquals(blog.getTitle(), result.getTitle());
@@ -91,7 +91,7 @@ public class TestCases {
 
     @Test
     public void testFindBlogById() {
-        when(blogRepository1.findById(1)).thenReturn(blog);
+        when(blogRepository1.findById(1)).thenReturn(Optional.ofNullable(blog));
 
         Blog result = blogService.findBlogById(1);
         assertEquals(blog, result);
@@ -101,7 +101,7 @@ public class TestCases {
     public void testAddImage() {
         when(imageService1.createAndReturn(any(Blog.class), anyString(), anyString())).thenReturn(image);
 
-        blogService.addImage(blog, "Test Image Description", "Test Image Dimensions");
+        blogService.addImage(blog.getId(), "Test Image Description", "Test Image Dimensions");
         assertEquals(2, blog.getImageList().size());
         assertEquals(image, blog.getImageList().get(1));
     }
@@ -118,7 +118,7 @@ public class TestCases {
 
     @Test
     public void testDeleteBlog() {
-        when(blogRepository1.findById(1)).thenReturn(blog);
+        when(blogRepository1.findById(1)).thenReturn(Optional.ofNullable(blog));
 
         blogService.deleteBlog(1);
         verify(blogRepository1, times(1)).delete(blog);

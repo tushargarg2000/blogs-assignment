@@ -16,10 +16,10 @@ public interface UserRepository extends JpaRepository<User, Integer> {
             "u.lastName = :#{#user.lastName} ")
     void update(User user);
     @Modifying
-    @Query("select * from user u where u.username =:username")
+    @Query(value = "select * from user u where u.username =:username",nativeQuery = true)
     User findByUsername(String username);
 
     @Modifying
-    @Query("select * from user u where u.id =:id")
+    @Query(value = "select * from user u where u.id =:id",nativeQuery = true)
     User findById(int id);
 }
