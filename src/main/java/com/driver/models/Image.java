@@ -12,7 +12,7 @@ public class Image {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
     private String description;
-    private String dimensions;
+    private String dimensions; // in the format HXD, for example: 720X480
     @ManyToOne
     @JoinColumn
     private Blog blog;

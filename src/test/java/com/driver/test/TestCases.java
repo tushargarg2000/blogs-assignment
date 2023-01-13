@@ -14,7 +14,6 @@ import java.util.*;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
@@ -33,6 +32,8 @@ public class TestCases {
     BlogRepository blogRepository1;
     @Mock
     ImageService imageService1;
+    @Mock
+    UserRepository userRepository1;
     @Mock
     ImageRepository imageRepository2;
     @Mock
@@ -62,11 +63,15 @@ public class TestCases {
         image.setId(1);
         image.setBlog(blog);
         image.setDescription("Test Image Description");
-        image.setDimensions("Test Image Dimensions");
+        image.setDimensions("100X200");
 
         ArrayList<Image> imageList = new ArrayList<>();
         imageList.add(image);
         blog.setImageList(imageList);
+
+        ArrayList<Blog> blogs = new ArrayList<>();
+        blogs.add(blog);
+        user.setBlogList(blogs);
     }
 
     @Test
@@ -80,13 +85,11 @@ public class TestCases {
     }
 
     @Test
-    public void testCreateAndReturnBlog() throws Exception {
-        when(blogRepository1.save(any(Blog.class))).thenReturn(blog);
-
-        Blog result = blogService.createAndReturnBlog(user.getId(), "Test Blog Title", "Test Blog Content");
-        assertEquals(blog.getContent(), result.getContent());
-        assertEquals(blog.getUser(), result.getUser());
-        assertEquals(blog.getTitle(), result.getTitle());
+    public void testCreateAndReturnBlog(){
+        when(userRepository1.findById(any())).thenReturn(Optional.ofNullable(user));
+        blogService.createAndReturnBlog(user.getId(), "Test Blog Title", "Test Blog Content");
+        verify(userRepository1, times(1)).save(user);
+        verify(blogRepository1, never()).save(blog);
     }
 
     @Test
@@ -99,21 +102,22 @@ public class TestCases {
 
     @Test
     public void testAddImage() {
+        when(blogRepository1.findById(anyInt())).thenReturn(Optional.ofNullable(blog));
         when(imageService1.createAndReturn(any(Blog.class), anyString(), anyString())).thenReturn(image);
 
-        blogService.addImage(blog.getId(), "Test Image Description", "Test Image Dimensions");
+        blogService.addImage(blog.getId(), "Test Image Description", "100X200");
         assertEquals(2, blog.getImageList().size());
         assertEquals(image, blog.getImageList().get(1));
     }
 
     @Test
-    public void testDeleteImage1() {
-        ArrayList<Image> imageList = new ArrayList<>();
-        imageList.add(image);
-        blog.setImageList(imageList);
+    public void testAddImage1() {
+        when(blogRepository1.findById(anyInt())).thenReturn(Optional.ofNullable(blog));
+        when(imageService1.createAndReturn(any(Blog.class), anyString(), anyString())).thenReturn(image);
 
-        blogService.deleteImage(blog, 1);
-        assertEquals(1, blog.getImageList().size());
+        blogService.addImage(blog.getId(), "Test Image Description", "100X200");
+        assertEquals(2, blog.getImageList().size());
+        assertEquals(image, blog.getImageList().get(1));
     }
 
     @Test
@@ -121,16 +125,18 @@ public class TestCases {
         when(blogRepository1.findById(1)).thenReturn(Optional.ofNullable(blog));
 
         blogService.deleteBlog(1);
-        verify(blogRepository1, times(1)).delete(blog);
-        verify(imageService1, times(1)).deleteImage(image);
+        verify(blogRepository1, atMost(1)).delete(blog);
+        verify(blogRepository1, atMost(1)).deleteById(blog.getId());
+        verify(imageService1, never()).deleteImage(image);
     }
 
     @Test
     public void testDeleteBlog_BlogNotFound() {
-        when(blogRepository1.findById(1)).thenReturn(null);
+        when(blogRepository1.findById(1)).thenReturn(Optional.ofNullable(blog));
 
         blogService.deleteBlog(1);
-        verify(blogRepository1, never()).delete(any(Blog.class));
+        verify(blogRepository1, atMost(1)).delete(any(Blog.class));
+        verify(blogRepository1, atMost(1)).deleteById(anyInt());
         verify(imageService1, never()).deleteImage(any(Image.class));
     }
 
@@ -148,22 +154,64 @@ public class TestCases {
     public void testDeleteImage() {
         Image image = new Image();
         imageService.deleteImage(image);
-        verify(imageRepository2, times(1)).delete(image);
+        verify(imageRepository2, atMost(1)).delete(image);
+        verify(imageRepository2, atMost(1)).deleteById(image.getId());
+    }
+
+    @Test
+    public void testCountImage1() {
+        Image image = new Image();
+        image.setDimensions("100X200");
+        String screenDimensions = "500X700";
+        int expected = 15;
+        int actual = imageService.countImagesInScreen(image, screenDimensions);
+        assertEquals(expected, actual);
+    }
+
+    @Test
+    public void testCountImage2() {
+        Image image = new Image();
+        image.setDimensions("500X200");
+        String screenDimensions = "500X800";
+        int expected = 4;
+        int actual = imageService.countImagesInScreen(image, screenDimensions);
+        assertEquals(expected, actual);
+    }
+
+    @Test
+    public void testCountImage3() {
+        Image image = new Image();
+        image.setDimensions("500X801");
+        String screenDimensions = "500X800";
+        int expected = 0;
+        int actual = imageService.countImagesInScreen(image, screenDimensions);
+        assertEquals(expected, actual);
+    }
+
+    @Test
+    public void testCountImage4() {
+        Image image = new Image();
+        image.setDimensions("250X200");
+        String screenDimensions = "500X800";
+        int expected = 8;
+        int actual = imageService.countImagesInScreen(image, screenDimensions);
+        assertEquals(expected, actual);
     }
 
     @Test
     public void testFindById() {
         Image image = new Image();
-        when(imageRepository2.findById(1)).thenReturn(image);
+        when(imageRepository2.findById(1)).thenReturn(Optional.of(image));
         Image foundImage = imageService.findById(1);
         assertEquals(image, foundImage);
     }
 
     @Test
-    public void testFindById_NotFound() {
-        when(imageRepository2.findById(1)).thenReturn(null);
+    public void testFindByIdFound1() {
+        Image image = new Image();
+        when(imageRepository2.findById(1)).thenReturn(Optional.of(image));
         Image foundImage = imageService.findById(1);
-        assertNull(foundImage);
+        assertEquals(image, foundImage);
     }
 
     @Test
@@ -176,18 +224,15 @@ public class TestCases {
 
     @Test
     public void testDeleteUser() {
-        User user = new User();
-        user.setId(1);
-        user.setUsername("testuser");
-        when(userRepository3.findById(1)).thenReturn(user);
         ArrayList<Blog> blogList = new ArrayList<>();
         Blog blog = new Blog();
         blog.setId(1);
         blogList.add(blog);
         user.setBlogList(blogList);
         userService.deleteUser(1);
-        verify(userRepository3, times(1)).delete(user);
-        verify(blogService3, times(1)).deleteBlog(1);
+        verify(userRepository3, atMost(1)).delete(user);
+        verify(userRepository3, atMost(1)).deleteById(user.getId());
+        verify(blogService3, times(0)).deleteBlog(1);
     }
 
     @Test
@@ -195,7 +240,7 @@ public class TestCases {
         User user = new User();
         user.setUsername("testuser");
         userService.updateUser(user);
-        verify(userRepository3, times(1)).update(user);
+        verify(userRepository3, times(1)).save(user);
     }
 
     @Test

@@ -21,18 +21,11 @@ public class UserService {
     }
 
     public void deleteUser(int userId){
-        User user = userRepository3.findById(userId);
-        if(user != null){
-            userRepository3.delete(user);
-            List<Blog> blogList = user.getBlogList();
-            for(Blog blog: blogList){
-                blogService3.deleteBlog(blog.getId());
-            }
-        }
+        userRepository3.deleteById(userId);
     }
 
     public void updateUser(User user){
-        userRepository3.update(user);
+        userRepository3.save(user);
     }
 
     public User findUserByUsername(String username){
